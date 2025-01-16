@@ -17,7 +17,7 @@
 		"build": "tsc",
 		"ci": "node --run test && npm run typecheck && node --run lint",
 		"lint": "biome check",
-		"test": "node --test 'src/**/*.test.ts'",
+		"test": "node --test-isolation=none --test-reporter=spec --experimental-test-coverage --test-coverage-exclude='src/{testConfigDirs/**/*,**/*.test.ts}' --test 'src/**/*.test.ts'",
 		"typecheck": "tsc --noEmit"
 	},
 	"files": ["dist"],
