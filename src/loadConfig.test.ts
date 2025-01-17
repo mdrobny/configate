@@ -4,6 +4,25 @@ import { describe, it } from 'node:test';
 import { loadConfig } from './loadConfig.ts';
 
 describe('loadConfig', () => {
+	it('tries to load config from "current working directory/config" when no options provided', async () => {
+		return assert.rejects(
+			async () => {
+				await loadConfig<TestConfig>();
+			},
+			(error) => {
+				if (error instanceof Error) {
+					assert(
+						error.message.includes(
+							'config/default" not found with any extension: ts, js',
+						),
+					);
+					return true;
+				}
+				return false;
+			},
+		);
+	});
+
 	it('loads default config', async () => {
 		const { config } = await loadConfig<TestConfig>({
 			configDirs: [`${import.meta.dirname}/testConfigDirs/environment`],

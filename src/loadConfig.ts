@@ -36,7 +36,10 @@ export async function loadConfig<Config extends DefaultConfig>({
 	fileExtensions = ['ts', 'js'],
 	throwOnUndefinedProp = true,
 	freezeConfig = true,
-}: LoadConfigOptions): Promise<{ config: Config; unsecureConfig: Config }> {
+}: LoadConfigOptions = {}): Promise<{
+	config: Config;
+	unsecureConfig: Config;
+}> {
 	let mergedConfig = {} as Config;
 
 	for (const configDir of configDirs) {
