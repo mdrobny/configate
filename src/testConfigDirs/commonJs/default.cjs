@@ -1,3 +1,3 @@
 module.exports.config = {
-	shallowProperty: 'shallowInCJS',
+    shallowProperty: 'shallowInCJS',
 };

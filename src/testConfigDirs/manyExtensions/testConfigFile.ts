@@ -1,3 +1,3 @@
 export const config = {
-	shallowProperty: 'shallowInTS',
+    shallowProperty: 'shallowInTS',
 };

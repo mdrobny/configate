@@ -31,47 +31,47 @@ import { makeSecureDeepProxy } from './makeSecureDeepProxy.ts';
  *    - `unsecureConfig` - an unsecure config. May be needed if config is passed directly to some module that wants to read undefined props or modify it
  */
 export async function loadConfig<Config extends DefaultConfig>({
-	configDirs = [`${process.cwd()}/config`],
-	environment = process.env.NODE_ENV,
-	fileExtensions = ['ts', 'js'],
-	throwOnUndefinedProp = true,
-	freezeConfig = true,
+    configDirs = [`${process.cwd()}/config`],
+    environment = process.env.NODE_ENV,
+    fileExtensions = ['ts', 'js'],
+    throwOnUndefinedProp = true,
+    freezeConfig = true,
 }: LoadConfigOptions = {}): Promise<{
-	config: Config;
-	unsecureConfig: Config;
+    config: Config;
+    unsecureConfig: Config;
 }> {
-	let mergedConfig = {} as Config;
+    let mergedConfig = {} as Config;
 
-	for (const configDir of configDirs) {
-		const config = await importConfigFiles<Config>({
-			configDir,
-			environment,
-			fileExtensions,
-		});
+    for (const configDir of configDirs) {
+        const config = await importConfigFiles<Config>({
+            configDir,
+            environment,
+            fileExtensions,
+        });
 
-		mergedConfig = deepMerge(mergedConfig, config as Partial<Config>);
-	}
+        mergedConfig = deepMerge(mergedConfig, config as Partial<Config>);
+    }
 
-	const unsecureConfig = structuredClone(mergedConfig);
+    const unsecureConfig = structuredClone(mergedConfig);
 
-	if (throwOnUndefinedProp) {
-		mergedConfig = makeSecureDeepProxy(mergedConfig);
-	}
+    if (throwOnUndefinedProp) {
+        mergedConfig = makeSecureDeepProxy(mergedConfig);
+    }
 
-	if (freezeConfig) {
-		mergedConfig = deepFreezeConfig(mergedConfig);
-	}
+    if (freezeConfig) {
+        mergedConfig = deepFreezeConfig(mergedConfig);
+    }
 
-	return {
-		config: mergedConfig as Config,
-		unsecureConfig: unsecureConfig as Config,
-	};
+    return {
+        config: mergedConfig as Config,
+        unsecureConfig: unsecureConfig as Config,
+    };
 }
 
 type LoadConfigOptions = {
-	configDirs?: string[];
-	environment?: Environment;
-	fileExtensions?: FileExtension[];
-	throwOnUndefinedProp?: boolean;
-	freezeConfig?: boolean;
+    configDirs?: string[];
+    environment?: Environment;
+    fileExtensions?: FileExtension[];
+    throwOnUndefinedProp?: boolean;
+    freezeConfig?: boolean;
 };
