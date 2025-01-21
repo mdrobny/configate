@@ -54,6 +54,30 @@ describe('importConfigFile', () => {
         assert.deepEqual(config, { shallowProperty: 'shallowInCJS' });
     });
 
+    it('always imports a fresh config file thanks to cacheBuster', async () => {
+        process.env.SHALLOW_PROPERTY = 'shallow-env-var';
+
+        const config = await importConfigFile({
+            filePath: `${import.meta.dirname}/testConfigDirs/envVars/custom-environment-variables`,
+            fileExtensions: ['ts'],
+        });
+
+        assert.deepEqual(config, { shallowProperty: 'shallow-env-var' });
+
+        process.env.SHALLOW_PROPERTY = 'changed-shallow-env-var';
+
+        const config2 = await importConfigFile({
+            filePath: `${import.meta.dirname}/testConfigDirs/envVars/custom-environment-variables`,
+            fileExtensions: ['ts'],
+        });
+
+        assert.deepEqual(config2, {
+            shallowProperty: 'changed-shallow-env-var',
+        });
+
+        process.env.SHALLOW_PROPERTY = undefined;
+    });
+
     it('throws an error if the config file is not found with any extension', async () => {
         await assert.rejects(
             async () => {
