@@ -35,7 +35,7 @@ export async function importConfigFile<Config extends DefaultConfig>({
 
     try {
         const configFile = await import(
-            `${filePath}.${selectedExtension}`,
+            `${filePath}.${selectedExtension}?cacheBuster=${Math.random()}`,
             importOptions
         );
         // Named export of `config` variable is preferred over default export

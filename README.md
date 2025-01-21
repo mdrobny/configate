@@ -1,5 +1,8 @@
 # Configate
 
+[![NPM Version](https://img.shields.io/npm/v/configate)](https://www.npmjs.com/package/configate)
+[![JSR](https://jsr.io/badges/@drob/configate)](https://jsr.io/@drob/configate)
+
 Configuration helper for TypeScript applications.
 
 It acts as a gateway to your configuration, allowing it to be defined in various ways but used only in a single, type-safe manner.
@@ -19,6 +22,12 @@ Configate supports:
 - configuration immutability - it freezes the configuration object to prevent modifications
 - EcmaScript Modules (ESM) - it works **only** in ESM applications
    - but config files can be in CommonJS format if really necessary
+
+## Supported runtimes
+
+- Node.js
+- Deno
+- Bun
 
 ## Installation
 
