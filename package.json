@@ -1,47 +1,47 @@
 {
-  "name": "configate",
-  "version": "0.1.3",
-  "type": "module",
-  "description": "Configuration helper for TypeScript applications",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "default": "./dist/index.js",
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "scripts": {
-    "build": "tsc",
-    "ci": "node --run test && npm run typecheck && node --run lint",
-    "lint": "biome check",
-    "test": "node --test-isolation=none --test-reporter=spec --experimental-test-coverage --test-coverage-exclude='src/{testConfigDirs/**/*,**/*.test.ts}' --test 'src/**/*.test.ts'",
-    "typecheck": "tsc --noEmit"
-  },
-  "files": [
-    "dist"
-  ],
-  "engines": {
-    "node": ">= 20"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mdrobny/configate.git"
-  },
-  "keywords": [
-    "config"
-  ],
-  "author": "Michal Drobniak",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/mdrobny/configate/issues"
-  },
-  "homepage": "https://github.com/mdrobny/configate#readme",
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@types/node": "^22.10.6",
-    "typescript": "^5.7.3"
-  }
+	"name": "configate",
+	"version": "0.1.3",
+	"type": "module",
+	"description": "Configuration helper for TypeScript applications",
+	"main": "dist/index.js",
+	"module": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"default": "./dist/index.js",
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"ci": "node --run test && npm run typecheck && node --run lint",
+		"lint": "biome check",
+		"test": "node --test-isolation=none --test-reporter=spec --experimental-test-coverage --test-coverage-exclude='src/{testConfigDirs/**/*,**/*.test.ts}' --test 'src/**/*.test.ts'",
+		"typecheck": "tsc --noEmit"
+	},
+	"files": [
+		"dist"
+	],
+	"engines": {
+		"node": ">= 20"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/mdrobny/configate.git"
+	},
+	"keywords": [
+		"config"
+	],
+	"author": "Michal Drobniak",
+	"license": "Apache-2.0",
+	"bugs": {
+		"url": "https://github.com/mdrobny/configate/issues"
+	},
+	"homepage": "https://github.com/mdrobny/configate#readme",
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/node": "^22.10.6",
+		"typescript": "^5.7.3"
+	}
 }
