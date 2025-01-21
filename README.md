@@ -23,6 +23,12 @@ Configate supports:
 - EcmaScript Modules (ESM) - it works **only** in ESM applications
    - but config files can be in CommonJS format if really necessary
 
+## Supported runtimes
+
+- Node.js
+- Deno
+- Bun
+
 ## Installation
 
 To install Configate, use your preferred package manager:

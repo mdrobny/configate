@@ -1,0 +1,11 @@
+{
+  "name": "examples-bun",
+  "type": "module",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@types/bun": "^1.1.17"
+  }
+}
