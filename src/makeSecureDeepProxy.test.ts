@@ -80,6 +80,18 @@ describe('makeSecureDeepProxy', () => {
         assert.throws(() => {
             proxy.a[3];
         }, /Property 3 is not defined in the config/);
+
+        assert.doesNotThrow(() => {
+            [...proxy.a];
+            Array.from(proxy.a);
+
+            proxy.a.map((x) => x * 2);
+
+            for (const _item of proxy.a) {
+            }
+
+            new Set(proxy.a);
+        }, 'Accessing array methods, spreading or using loop should not throw an error');
     });
 
     it('deeply proxies nested arrays', () => {

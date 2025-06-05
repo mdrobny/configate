@@ -26,9 +26,10 @@ export function makeSecureDeepProxy<T extends DefaultConfig>(config: T): T {
 function makeSecureProxy<T extends DefaultConfig>(targetObject: T): T {
     return new Proxy(targetObject, {
         get(target, prop) {
-            // Handle Symbol.toStringTag and Array properties
+            // Handle Symbol and Array properties
             if (
-                prop === Symbol.toStringTag ||
+                typeof prop === 'symbol' ||
+                // Don't throw error when using array methods
                 (Array.isArray(target) && Number.isNaN(Number(prop)))
             ) {
                 return Reflect.get(target, prop);
