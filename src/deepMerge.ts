@@ -18,7 +18,7 @@ export function deepMerge<T extends DefaultConfig>(
 
     if (isObject(target) && isObject(source)) {
         for (const key in source) {
-            if (Object.prototype.hasOwnProperty.call(source, key)) {
+            if (Object.hasOwn(source, key)) {
                 if (key === '__proto__' || key === 'constructor') {
                     continue;
                 }
