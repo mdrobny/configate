@@ -15,7 +15,7 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"ci": "node --run test && npm run typecheck && node --run lint",
+		"ci": "node --run test && node --run typecheck && node --run lint",
 		"lint": "biome check",
 		"test": "node --test-isolation=none --test-reporter=spec --experimental-test-coverage --test-coverage-exclude='src/{testConfigDirs/**/*,**/*.test.ts}' --test 'src/**/*.test.ts'",
 		"typecheck": "tsc --noEmit"
