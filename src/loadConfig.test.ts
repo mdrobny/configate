@@ -88,7 +88,6 @@ describe('loadConfig', () => {
     });
 });
 
-// biome-ignore lint/suspicious/noExportsInTest: we need it in config files
 export type TestConfig = {
     shallowProperty: string;
     nestedObject: {

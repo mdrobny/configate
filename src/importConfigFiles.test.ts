@@ -29,7 +29,6 @@ describe('importConfigFiles', () => {
     });
 });
 
-// biome-ignore lint/suspicious/noExportsInTest: <explanation>
 export type TestConfig = {
     shallowProperty: string;
     nestedObject: {
