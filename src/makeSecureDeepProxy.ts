@@ -29,8 +29,10 @@ function makeSecureProxy<T extends DefaultConfig>(targetObject: T): T {
             // Handle Symbol and Array properties
             if (
                 typeof prop === 'symbol' ||
-                // Don't throw error when using array methods
-                (Array.isArray(target) && Number.isNaN(Number(prop)))
+                /** Don't throw error when using array methods */
+                (Array.isArray(target) && Number.isNaN(Number(prop))) ||
+                /** Allow stringifying proxied config (because JSON.stringify calls this method) */
+                prop === 'toJSON'
             ) {
                 return Reflect.get(target, prop);
             }
