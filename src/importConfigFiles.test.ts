@@ -27,6 +27,49 @@ describe('importConfigFiles', () => {
 
         process.env.SHALLOW_PROPERTY = undefined;
     });
+
+    it('loads variant-specific overrides on top of defaults', async () => {
+        const config = await importConfigFiles<TestConfig>({
+            configDir: `${import.meta.dirname}/testConfigDirs/variant`,
+            variant: 'customerA',
+            fileExtensions: ['ts'],
+        });
+
+        assert.equal(config.shallowProperty, 'default');
+        assert.equal(
+            config.nestedObject.nestedProperty1,
+            'default-customerA-n1',
+        );
+        assert.equal(config.nestedObject.nestedProperty2, 'local-customerA-n2');
+
+        const configB = await importConfigFiles<TestConfig>({
+            configDir: `${import.meta.dirname}/testConfigDirs/variant`,
+            variant: 'customerB',
+            fileExtensions: ['ts'],
+        });
+
+        assert.equal(configB.shallowProperty, 'default');
+        assert.equal(
+            configB.nestedObject.nestedProperty1,
+            'default-customerB-n1',
+        );
+    });
+
+    it('prioritizes environment+variant specific files and locals', async () => {
+        const config = await importConfigFiles<TestConfig>({
+            configDir: `${import.meta.dirname}/testConfigDirs/variant`,
+            environment: 'production',
+            variant: 'customerA',
+            fileExtensions: ['ts'],
+        });
+
+        assert.equal(config.shallowProperty, 'local-production');
+        assert.equal(
+            config.nestedObject.nestedProperty1,
+            'default-customerA-n1',
+        );
+        assert.equal(config.nestedObject.nestedProperty2, 'local-customerA-n2');
+    });
 });
 
 export type TestConfig = {

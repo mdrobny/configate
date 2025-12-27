@@ -10,10 +10,14 @@ import { makeSecureDeepProxy } from './makeSecureDeepProxy.ts';
  * Features:
  * - Load config files in order:
  *     1. default.ext
- *     2. {environment}.ext
- *     4. local.ext
- *     3. local-{environment}.ext
- *     5. custom-environment-variables.ext (only for .ts and .js files)
+ *     2. default-{variant}.ext
+ *     3. {environment}.ext
+ *     4. {environment}-{variant}.ext
+ *     5. local.ext
+ *     6. local-{variant}.ext
+ *     7. local-{environment}.ext
+ *     8. local-{environment}-{variant}.ext
+ *     9. custom-environment-variables.ext (only for .ts and .js files)
  * - Throw an error if a property is accessed that is not defined in the config
  * - Freeze the config object to prevent modifications
  * - Supported config file formats: TypeScript (.ts, .mts), JavaScript (.js, .mjs), JSON (.json)
@@ -22,6 +26,7 @@ import { makeSecureDeepProxy } from './makeSecureDeepProxy.ts';
  *
  * @param configDirs - paths to directories where the config files are located. Relative or absolute. Directories are merged in the array order. Default: ['${current-working-directory}/config']
  * @param environment - the environment to load the config for. Default: process.env.NODE_ENV
+ * @param variant - allows to define 2nd dimension of configs above environment. Default: undefined
  * @param fileExtensions - an array of file extensions to use when looking for config files. Configs are loaded in this order. Default: ['ts', 'js']
  * @param throwOnUndefinedProp - throw an error if a property is accessed that is not defined in the config. Default: true
  * @param freezeConfig - freeze the config object to prevent modifications. Default: true
@@ -33,6 +38,7 @@ import { makeSecureDeepProxy } from './makeSecureDeepProxy.ts';
 export async function loadConfig<Config extends DefaultConfig>({
     configDirs = [`${process.cwd()}/config`],
     environment = process.env.NODE_ENV,
+    variant,
     fileExtensions = ['ts', 'js'],
     throwOnUndefinedProp = true,
     freezeConfig = true,
@@ -46,6 +52,7 @@ export async function loadConfig<Config extends DefaultConfig>({
         const config = await importConfigFiles<Config>({
             configDir,
             environment,
+            variant,
             fileExtensions,
         });
 
@@ -71,6 +78,7 @@ export async function loadConfig<Config extends DefaultConfig>({
 type LoadConfigOptions = {
     configDirs?: string[];
     environment?: Environment;
+    variant?: string;
     fileExtensions?: FileExtension[];
     throwOnUndefinedProp?: boolean;
     freezeConfig?: boolean;

@@ -13,6 +13,7 @@ import { importConfigFile } from './importConfigFile.ts';
 export async function importConfigFiles<Config extends DefaultConfig>({
     configDir,
     environment,
+    variant,
     fileExtensions,
 }: ImportConfigFilesOptions): Promise<DefaultConfig> {
     /** default.ext **/
@@ -22,11 +23,21 @@ export async function importConfigFiles<Config extends DefaultConfig>({
         shouldThrowError: true,
     });
 
+    /** default-{variant}.ext **/
+    let defaultVariantConfig: DeepPartial<Config> | undefined;
+    if (variant) {
+        defaultVariantConfig = await importConfigFile<DeepPartial<Config>>({
+            filePath: `${configDir}/default-${variant}`,
+            fileExtensions,
+        });
+    }
+
     /** {environment}.ext **/
-    let envConfig: DeepPartial<Config> | undefined;
+    let environmentConfig: DeepPartial<Config> | undefined;
+    let environmentVariantConfig: DeepPartial<Config> | undefined;
     if (environment) {
         try {
-            envConfig = await importConfigFile<DeepPartial<Config>>({
+            environmentConfig = await importConfigFile<DeepPartial<Config>>({
                 filePath: `${configDir}/${environment}`,
                 fileExtensions,
                 shouldThrowError: true,
@@ -36,6 +47,16 @@ export async function importConfigFiles<Config extends DefaultConfig>({
                 `Environment ${environment} defined but no config file found`,
             );
         }
+
+        /** {environment}-{variant}.ext **/
+        if (variant) {
+            environmentVariantConfig = await importConfigFile<
+                DeepPartial<Config>
+            >({
+                filePath: `${configDir}/${environment}-${variant}`,
+                fileExtensions,
+            });
+        }
     }
 
     /** local.ext **/
@@ -43,6 +64,15 @@ export async function importConfigFiles<Config extends DefaultConfig>({
         filePath: `${configDir}/local`,
         fileExtensions,
     });
+
+    /** local-{variant}.ext **/
+    let localVariantConfig: DeepPartial<Config> | undefined;
+    if (variant) {
+        localVariantConfig = await importConfigFile<DeepPartial<Config>>({
+            filePath: `${configDir}/local-${variant}`,
+            fileExtensions,
+        });
+    }
 
     /** local-{environment}.ext **/
     const localEnvConfig = environment
@@ -60,8 +90,11 @@ export async function importConfigFiles<Config extends DefaultConfig>({
 
     return deepMerge<Config>(
         structuredClone(defaultConfig),
-        structuredClone(envConfig ?? {}),
+        structuredClone(defaultVariantConfig ?? {}),
+        structuredClone(environmentConfig ?? {}),
+        structuredClone(environmentVariantConfig ?? {}),
         structuredClone(localConfig),
+        structuredClone(localVariantConfig ?? {}),
         structuredClone(localEnvConfig),
         structuredClone(customEnvVarsConfig),
     ) as Config;
@@ -70,5 +103,6 @@ export async function importConfigFiles<Config extends DefaultConfig>({
 type ImportConfigFilesOptions = {
     configDir: string;
     environment?: Environment;
+    variant?: string;
     fileExtensions: FileExtension[];
 };
