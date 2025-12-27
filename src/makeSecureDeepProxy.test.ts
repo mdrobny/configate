@@ -139,4 +139,15 @@ describe('makeSecureDeepProxy', () => {
             proxy.a[1].b;
         }, /Property b is not defined in the config/);
     });
+
+    it('allows JSON.stringify on secure config', () => {
+        const config = {
+            a: 1,
+            nested: { b: 'text' },
+        };
+
+        const proxy = makeSecureDeepProxy(config);
+
+        assert.equal(JSON.stringify(proxy), '{"a":1,"nested":{"b":"text"}}');
+    });
 });
