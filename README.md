@@ -45,6 +45,7 @@ Use the `loadConfig` function once, to load and merge configurations from specif
 With parameters you can define:
 - `configDirs`: (Default: `['${current-working-directory}/config']`) An array of directories to load configurations from
 - `environment`: (Default: `process.env.NODE_ENV`) The environment to load specific configurations for
+- `variant`: (Default: `undefined`) Allows to define 2nd dimension of configs above environment. Will load configs matching `*-{variant}` pattern
 - `fileExtensions`: (Default: `['ts', 'js']`) An array of file extensions to load configurations from
 - `throwOnUndefinedProp`: (Default: `true`) If true, throws an error when accessing undefined properties
 - `freezeConfig`: (Default: `true`) If true, freezes the configuration object to make it immutable
@@ -153,14 +154,52 @@ Add this to `.gitignore` to prevent committing local configuration files:
 **/config/local*
 ```
 
+### Second layer of variant configurations
+
+Some applications may need another layer of overrides besides environments (for example: regions, brands, customers etc).
+Pass the `variant` option to `loadConfig` and create files that follow the `*-{variant}` naming convention to scope those overrides.
+
+When `variant` is set, Configate looks for these optional files on top of the usual ones:
+- `default-{variant}.ext`
+- `{environment}-{variant}.ext`
+- `local-{variant}.ext`
+- `local-{environment}-{variant}.ext`
+
+Example setup:
+
+```text
+config/
+  default.ts
+  default-customerA.ts
+  default-customerB.ts
+  production.ts
+  production-customerA.ts
+```
+
+```ts
+// src/config.ts
+import { loadConfig } from 'configate';
+
+export const { config } = await loadConfig<AppConfig>({
+  environment: 'production',
+  variant: 'customerA',
+});
+```
+
+This keeps the base config reusable while still letting you target per-variant overrides without duplicating entire files.
+
 ### Order of loading configuration files
 
 ```
-default.ext
-{environment}.ext
-local.ext
-local-{environment}.ext
-custom-environment-variables.ext
+1. default.ext
+2. default-{variant}.ext
+3. {environment}.ext
+4. {environment}-{variant}.ext
+5. local.ext
+6. local-{variant}.ext
+7. local-{environment}.ext
+8. local-{environment}-{variant}.ext
+9. custom-environment-variables.ext
 ```
 
 ### Using unsecure config
@@ -221,4 +260,3 @@ export const { config } = await loadConfig<TestConfig>({
   ],
 });
 ```
-
