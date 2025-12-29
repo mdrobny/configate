@@ -1,0 +1,37 @@
+# Publish to NPM and JSR registries whenever a tag is pushed
+name: Release package
+
+on:
+  push:
+    tags: v*
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # The OIDC ID token is used for authentication with NPM and JSR
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
+
+      - name: Install dependencies
+        run: npm clean-install
+
+      - name: Test
+        run: node --run ci
+
+      - name: Build
+        run: node --run build
+
+      # Using "NPM trusted publishing" to authenticate
+      - name: Publish package to NPM
+        run: npm publish
+
+      # Using "JSR publshing from Github Actions" to authenticate
+      - name: Publish package to JSR
+        run: npx jsr publish
