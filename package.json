@@ -30,6 +30,10 @@
 		"type": "git",
 		"url": "git+https://github.com/mdrobny/configate.git"
 	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org",
+		"provenance": true
+	},
 	"keywords": [
 		"config"
 	],
@@ -43,5 +47,15 @@
 		"@biomejs/biome": "2.3.8",
 		"@types/node": "^22.10.6",
 		"typescript": "^5.7.3"
+	},
+	"devEngines": {
+		"runtime": {
+			"name": "node",
+			"onFail": "error"
+		},
+		"packageManager": {
+			"name": "npm",
+			"onFail": "error"
+		}
 	}
 }
