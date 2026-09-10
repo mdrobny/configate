@@ -86,6 +86,65 @@ describe('loadConfig', () => {
             config.shallowProperty = 'modified';
         });
     });
+
+    it(`freezes arrays while keeping unsecureConfig independent`, async () => {
+        const { config, unsecureConfig } = await loadConfig<ArrayTestConfig>({
+            configDirs: [`${import.meta.dirname}/testConfigDirs/arrays`],
+            throwOnUndefinedProp: true,
+        });
+
+        for (const container of [
+            config.values,
+            config.nested,
+            config.nested[0],
+            config.nested[0][0],
+            config.empty,
+        ]) {
+            assert(Object.isFrozen(container));
+        }
+        assert.throws(() => {
+            config.values[0] = 3;
+        }, TypeError);
+        assert.throws(() => {
+            config.values.push(3);
+        }, TypeError);
+        assert.throws(() => {
+            config.nested[0][0].label = 'modified';
+        }, TypeError);
+
+        assert.deepEqual(
+            config.values.map((value) => value * 2),
+            [2, 4],
+        );
+        assert.deepEqual([...config.values], [1, 2]);
+        assert.equal(JSON.stringify(config), JSON.stringify(unsecureConfig));
+
+        unsecureConfig.values.push(3);
+        unsecureConfig.nested[0][0].label = 'modified';
+        unsecureConfig.empty.push(1);
+        assert.deepEqual(config.values, [1, 2]);
+        assert.equal(config.nested[0][0].label, 'original');
+        assert.deepEqual(config.empty, []);
+    });
+
+    it(`keeps arrays mutable when freezing is disabled`, async () => {
+        const { config } = await loadConfig<ArrayTestConfig>({
+            configDirs: [`${import.meta.dirname}/testConfigDirs/arrays`],
+            throwOnUndefinedProp: true,
+            freezeConfig: false,
+        });
+
+        config.values[0] = 3;
+        config.values.push(4);
+        config.nested[0][0].label = 'modified';
+        config.nested[0].push({ label: 'new' });
+        config.empty.push(1);
+        assert.deepEqual(config.values, [3, 2, 4]);
+        assert.deepEqual(config.nested, [
+            [{ label: 'modified' }, { label: 'new' }],
+        ]);
+        assert.deepEqual(config.empty, [1]);
+    });
 });
 
 export type TestConfig = {
@@ -94,4 +153,10 @@ export type TestConfig = {
         nestedProperty1: string;
         nestedProperty2: string;
     };
+};
+
+export type ArrayTestConfig = {
+    values: number[];
+    nested: { label: string }[][];
+    empty: number[];
 };

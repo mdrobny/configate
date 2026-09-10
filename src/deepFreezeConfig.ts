@@ -5,7 +5,7 @@ import { type DefaultConfig, isObject } from './common.ts';
  */
 export function deepFreezeConfig<T extends DefaultConfig>(config: T): T {
     for (const key in config) {
-        if (isObject(config[key])) {
+        if (isObject(config[key]) || Array.isArray(config[key])) {
             config[key] = deepFreezeConfig<T[typeof key]>(config[key]);
         }
     }
