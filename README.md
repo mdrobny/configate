@@ -124,8 +124,10 @@ Do the same for other environments if you need to override more properties for t
 When you need to define secrets in configuration, they should be defined via environment variables.
 
 Create `custom-environment-variables.ts` file in `config` directory and export a `config` object.
+
 - use `process.env` to read environment variables and assign to property in your configuration
-- this file will be merged with other configs as last one so environment variables always have priority
+- this file is merged last within its directory, so its defined values override other files in that directory
+   - when loading multiple directories, later directories can override these values.
 
 ```ts
 // config/custom-environment-variables.ts
@@ -190,6 +192,8 @@ This keeps the base config reusable while still letting you target per-variant o
 
 ### Order of loading configuration files
 
+The following order applies separately within each configuration directory.
+
 ```
 1. default.ext
 2. default-{variant}.ext
@@ -249,6 +253,11 @@ const host = config.database.host;
 ### Examples
 
 #### Loading configurations from multiple directories
+
+Directories are fully loaded and merged in `configDirs` order. 
+Values from later directories override matching properties from earlier directories.
+
+For example, a value in the second directory's `default.ts` can override the same property from the first directory's `custom-environment-variables.ts`.
 
 ```ts
 import { loadConfig } from 'configate';

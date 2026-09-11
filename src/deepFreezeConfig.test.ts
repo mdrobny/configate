@@ -30,4 +30,38 @@ describe('deepFreezeConfig', () => {
             'Should throw an error when modifying a frozen property',
         );
     });
+
+    it('freezes arrays, nested arrays, and their objects', () => {
+        const config = deepFreezeConfig({
+            values: [1, 2],
+            nested: [[{ label: 'original' }]],
+            empty: [] as number[],
+        });
+
+        for (const container of [
+            config.values,
+            config.nested,
+            config.nested[0],
+            config.nested[0][0],
+            config.empty,
+        ]) {
+            assert(Object.isFrozen(container));
+        }
+
+        assert.throws(() => {
+            config.values[0] = 3;
+        }, TypeError);
+        assert.throws(() => {
+            config.values.push(3);
+        }, TypeError);
+        assert.throws(() => {
+            config.nested[0].push({ label: 'new' });
+        }, TypeError);
+        assert.throws(() => {
+            config.nested[0][0].label = 'modified';
+        }, TypeError);
+        assert.throws(() => {
+            config.empty.push(1);
+        }, TypeError);
+    });
 });

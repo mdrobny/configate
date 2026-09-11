@@ -82,6 +82,15 @@ export async function importConfigFiles<Config extends DefaultConfig>({
           })
         : {};
 
+    /** local-{environment}-{variant}.ext **/
+    const localEnvVariantConfig =
+        environment && variant
+            ? await importConfigFile<DeepPartial<Config>>({
+                  filePath: `${configDir}/local-${environment}-${variant}`,
+                  fileExtensions,
+              })
+            : {};
+
     /** custom-environment-variables.ext **/
     const customEnvVarsConfig = await importConfigFile<Config>({
         filePath: `${configDir}/custom-environment-variables`,
@@ -96,6 +105,7 @@ export async function importConfigFiles<Config extends DefaultConfig>({
         structuredClone(localConfig),
         structuredClone(localVariantConfig ?? {}),
         structuredClone(localEnvConfig),
+        structuredClone(localEnvVariantConfig),
         structuredClone(customEnvVarsConfig),
     ) as Config;
 }
