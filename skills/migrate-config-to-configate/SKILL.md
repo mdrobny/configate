@@ -204,6 +204,7 @@ Load any existing `.env` mechanism before Configate;
 Configate does not load `.env` files itself.
 
 Validate required secrets, parsed values, and application constraints at startup after awaiting `loadConfig`, before creating services.
+If the project already uses a Standard Schema library (zod 3.24+, valibot 1.0+, ArkType), pass it as the optional `schema` option of `loadConfig` instead: it validates the merged config and infers the type.
 Do not rely solely on throwing inside an optional configuration module: those errors can be swallowed. 
 For JSON or other parsers that may throw, validate the raw input in the application initialization boundary before loading, or otherwise propagate parsing failures there.
 Never report the secret value in an error.

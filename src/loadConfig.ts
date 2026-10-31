@@ -3,6 +3,8 @@ import { deepFreezeConfig } from './deepFreezeConfig.ts';
 import { deepMerge } from './deepMerge.ts';
 import { importConfigFiles } from './importConfigFiles.ts';
 import { makeSecureDeepProxy } from './makeSecureDeepProxy.ts';
+import type { StandardSchemaV1 } from './standardSchema.ts';
+import { validateConfig } from './validateConfig.ts';
 
 /**
  * Config library to load configuration files based on the environment
@@ -30,6 +32,7 @@ import { makeSecureDeepProxy } from './makeSecureDeepProxy.ts';
  * @param fileExtensions - an array of file extensions to use when looking for config files. Configs are loaded in this order. Default: ['ts', 'js']
  * @param throwOnUndefinedProp - throw an error if a property is accessed that is not defined in the config. Default: true
  * @param freezeConfig - freeze the config object to prevent modifications. Default: true
+ * @param schema - optional Standard Schema (zod, valibot, arktype...) to validate the merged config at runtime. The config type is inferred from it and the schema output (with transforms/defaults applied) is used. Throws ConfigValidationError when invalid. Default: undefined
  *
  * @returns a promise that resolves to an object with 2 properties:
  *    - `config` - a secure, frozen object with the loaded config. Throws an error if an undefined property is accessed
@@ -42,7 +45,8 @@ export async function loadConfig<Config extends DefaultConfig>({
     fileExtensions = ['ts', 'js'],
     throwOnUndefinedProp = true,
     freezeConfig = true,
-}: LoadConfigOptions = {}): Promise<{
+    schema,
+}: LoadConfigOptions<Config> = {}): Promise<{
     config: Config;
     unsecureConfig: Config;
 }> {
@@ -57,6 +61,10 @@ export async function loadConfig<Config extends DefaultConfig>({
         });
 
         mergedConfig = deepMerge(mergedConfig, config as Partial<Config>);
+    }
+
+    if (schema) {
+        mergedConfig = await validateConfig(schema, mergedConfig);
     }
 
     const unsecureConfig = structuredClone(mergedConfig);
@@ -75,11 +83,12 @@ export async function loadConfig<Config extends DefaultConfig>({
     };
 }
 
-type LoadConfigOptions = {
+type LoadConfigOptions<Config extends DefaultConfig> = {
     configDirs?: string[];
     environment?: Environment;
     variant?: string;
     fileExtensions?: FileExtension[];
     throwOnUndefinedProp?: boolean;
     freezeConfig?: boolean;
+    schema?: StandardSchemaV1<unknown, Config>;
 };
