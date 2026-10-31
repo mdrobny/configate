@@ -7,10 +7,11 @@ Load defaults, environment overrides, and environment variables into one typed c
 
 Configate merges configuration files, gives you typed property access, and freezes the result by default. 
 Accessing a missing property throws an error to help catch configuration mistakes.
+Optionally, pass a [Standard Schema](https://standardschema.dev) (zod, valibot, ...) to [validate the configuration at runtime](#validate-configuration-at-runtime) and infer its type.
 
 Zero dependencies. ESM only. Supports Node.js, Bun, and Deno.
 
-[Quick start](#quick-start) · [Common tasks](#common-tasks) · [Merging](#how-merging-works) · [API reference](#api-reference) · [Advanced recipes](#advanced-recipes) · [Troubleshooting](#troubleshooting) · [Examples and help](#examples-and-help)
+[Quick start](#quick-start) · [Common usages](#common-usages) · [Merging](#how-merging-works) · [API reference](#api-reference) · [Advanced recipes](#advanced-recipes) · [Troubleshooting](#troubleshooting) · [Examples and help](#examples-and-help)
 
 ## Quick start
 
@@ -92,7 +93,7 @@ With `NODE_ENV` unset, the output is:
 My app: port 3000
 ```
 
-## Common tasks
+## Common usages
 
 ### Override configuration by environment
 
@@ -146,7 +147,7 @@ export const config: PartialAppConfig = {
 };
 ```
 
-Environment variables are strings. Convert numbers and booleans explicitly; Configate does not parse or validate them. For example, `Number('invalid')` produces `NaN`, so validate application inputs when needed.
+Environment variables are strings. Convert numbers and booleans explicitly; Configate does not parse them. For example, `Number('invalid')` produces `NaN`, so add a [`schema`](#validate-configuration-at-runtime) to reject invalid values at startup.
 
 With the production file above, run (macOS/Linux):
 
@@ -167,6 +168,41 @@ Read them from your environment and check required values in application startup
 A missing environment variable does not automatically cause `loadConfig` to fail, and an empty-string default remains an empty string.
 
 Configate does not load `.env` files itself. If you use one, load it through your runtime or another tool before calling `loadConfig`.
+
+### Validate configuration at runtime
+
+Pass any [Standard Schema](https://standardschema.dev) compatible schema (zod 3.24+, valibot 1.0+, ArkType, and others) as `schema`. 
+Schemas are optional, and Configate adds no dependency; install the validation library you prefer.
+
+```ts
+// src/config.ts
+import { type DeepPartial, loadConfig } from 'configate';
+import { z } from 'zod';
+
+const schema = z.object({
+  appName: z.string(),
+  server: z.object({
+    port: z.number().int().positive(),
+  }),
+});
+
+export type AppConfig = z.infer<typeof schema>;
+export type PartialAppConfig = DeepPartial<AppConfig>;
+
+export const { config } = await loadConfig({ schema });
+```
+
+The config type is inferred from the schema, so no generic is needed. 
+The merged configuration is validated once, after all files are loaded. 
+If it is invalid, `loadConfig` rejects with a `ConfigValidationError` that lists every issue and exposes them as `error.issues`:
+
+```text
+Config validation failed:
+  - server.port: Invalid input: expected number, received NaN
+```
+
+Both `config` and `unsecureConfig` contain the schema's **output**, so defaults, coercions, and transforms (for example `z.coerce.number()` for environment variables) are applied. 
+Use schemas that output only plain data (objects, arrays, strings, numbers, booleans). Class instances such as `Date` are wrapped by the missing-property proxy and frozen, which breaks their methods.
 
 ### Override configuration locally
 
@@ -233,6 +269,7 @@ All options are optional:
 | `fileExtensions` | `FileExtension[]` | `['ts', 'js']` | Extensions to search, in priority order; omit the leading dot. |
 | `throwOnUndefinedProp` | `boolean` | `true` | Throw when reading a property that does not exist. |
 | `freezeConfig` | `boolean` | `true` | Deeply freeze `config`, including arrays. |
+| `schema` | Standard Schema | `undefined` | Validate the merged config at runtime and infer its type. See [validation](#validate-configuration-at-runtime). |
 
 The default directory is relative to the **working directory of the process**, not the file that calls `loadConfig`. Use absolute paths when the launch directory can vary.
 
@@ -243,9 +280,9 @@ The default directory is relative to the **working directory of the process**, n
 | `config` | Typed as `AppConfig`; frozen and checked for missing-property access by default. The two options above control those protections. |
 | `unsecureConfig` | An independent, mutable copy typed as `AppConfig`, without missing-property checks. Changing it does not change `config`. |
 
-`AppConfig` is your own application type. The quick start also exports `PartialAppConfig = DeepPartial<AppConfig>` from `src/config.ts` for use in override files. Configate provides the `DeepPartial<T>` helper and the `FileExtension` type for extension options.
+`AppConfig` is your own application type. The quick start also exports `PartialAppConfig = DeepPartial<AppConfig>` from `src/config.ts` for use in override files. Configate provides the `DeepPartial<T>` helper, the `FileExtension` type for extension options, and the `ConfigValidationError` class.
 
-TypeScript checks typed configuration files and property access at compile time. The `AppConfig` generic does **not** validate loaded values at runtime. Missing-property checks happen when a property is read; they do not check all required fields at startup or reject existing values such as `undefined`, `''`, or `NaN`.
+TypeScript checks typed configuration files and property access at compile time. The `AppConfig` generic does **not** validate loaded values at runtime; pass a [`schema`](#validate-configuration-at-runtime) for that. Missing-property checks happen when a property is read; they do not check all required fields at startup or reject existing values such as `undefined`, `''`, or `NaN`.
 
 ### Supported file formats
 
@@ -369,6 +406,7 @@ TypeScript's `NodeNext` module resolution understands package imports. A `tsconf
 | `Config file ".../default" not found` | Run from the project root, or set absolute `configDirs`. Every directory needs a default file with an enabled extension. |
 | `Environment ... defined but no config file found` | Check `NODE_ENV`, the `environment` option, and the matching file. This warning also occurs if that file fails to import. |
 | An override has no effect | Check the filename, selected environment/variant, extension priority, and later overrides. Optional override files that fail to import are skipped, so also check their syntax, imports, and exports. |
+| `Config validation failed` | The merged config does not match your `schema`. Each listed issue shows the path and reason; check every file that sets that property. |
 | `Property ... is not defined in the config` | The property is absent when read. Add it to the configuration, or use `unsecureConfig` for integrations that read optional properties. |
 | TypeScript files fail to load | Check your runtime's TypeScript support and ESM setup. Configate does not provide a loader. |
 | An environment variable has no effect | Map it in `custom-environment-variables.ts` and set it before loading. Unset values preserve earlier defaults; `.env` files need an external loader. |

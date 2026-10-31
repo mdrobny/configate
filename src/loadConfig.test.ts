@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import * as v from 'valibot';
+import { z } from 'zod';
+
 import { loadConfig } from './loadConfig.ts';
+import { ConfigValidationError } from './validateConfig.ts';
 
 describe('loadConfig', () => {
     it('tries to load config from "current working directory/config" when no options provided', async () => {
@@ -144,6 +148,77 @@ describe('loadConfig', () => {
             [{ label: 'modified' }, { label: 'new' }],
         ]);
         assert.deepEqual(config.empty, [1]);
+    });
+
+    describe('loadConfig with schema', () => {
+        const configDirs = [
+            `${import.meta.dirname}/testConfigDirs/environment`,
+        ];
+
+        it('validates with a zod schema and infers the config type', async () => {
+            const schema = z.object({
+                shallowProperty: z.string(),
+                nestedObject: z.object({
+                    nestedProperty1: z.string(),
+                    nestedProperty2: z.string(),
+                }),
+            });
+            const { config } = await loadConfig({ configDirs, schema });
+            const nested: string = config.nestedObject.nestedProperty1;
+            assert.equal(nested, 'nested1');
+            assert.throws(() => {
+                // @ts-expect-error test
+                config.undefinedProperty;
+            }, /Property undefinedProperty is not defined in the config/);
+        });
+
+        it('validates with a valibot schema', async () => {
+            const schema = v.object({
+                shallowProperty: v.string(),
+                nestedObject: v.object({
+                    nestedProperty1: v.string(),
+                    nestedProperty2: v.string(),
+                }),
+            });
+            const { config } = await loadConfig({ configDirs, schema });
+            assert.equal(config.shallowProperty, 'shallow');
+        });
+
+        it('rejects with ConfigValidationError when config is invalid', async () => {
+            const schema = z.object({ shallowProperty: z.number() });
+            await assert.rejects(
+                loadConfig({ configDirs, schema }),
+                (error: unknown) => {
+                    assert(error instanceof ConfigValidationError);
+                    assert.match(error.message, /Config validation failed:/);
+                    assert.match(error.message, /shallowProperty/);
+                    return true;
+                },
+            );
+        });
+
+        it('uses schema output (defaults, transforms) in config and unsecureConfig', async () => {
+            const schema = z.object({
+                shallowProperty: z.string().transform((s) => s.toUpperCase()),
+                added: z.number().default(5),
+            });
+            const { config, unsecureConfig } = await loadConfig({
+                configDirs,
+                schema,
+            });
+            assert.equal(config.shallowProperty, 'SHALLOW');
+            assert.equal(config.added, 5);
+            assert.equal(unsecureConfig.shallowProperty, 'SHALLOW');
+            assert.throws(() => {
+                config.added = 1;
+            }, /Cannot assign to read only property/);
+        });
+
+        it('type-checks an explicit generic against the schema output', async () => {
+            const schema = z.object({ shallowProperty: z.string() });
+            // @ts-expect-error schema output does not match TestConfig
+            await loadConfig<TestConfig>({ configDirs, schema });
+        });
     });
 });
 
