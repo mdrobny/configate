@@ -202,7 +202,7 @@ Config validation failed:
 ```
 
 Both `config` and `unsecureConfig` contain the schema's **output**, so defaults, coercions, and transforms (for example `z.coerce.number()` for environment variables) are applied. 
-`Set`, `Map`, `Date` and other non-plain values (class instances) are supported as leaf values: they are not merged or wrapped by the missing-property proxy, so their methods keep working. Schemas such as `z.set()`, `z.map()` and `z.date()` therefore work too.
+`Set`, `Map`, `Date` and other non-plain values (class instances) are supported as leaf values: they are not merged or wrapped by the missing-property proxy, so their methods keep working. Schemas such as `z.set()`, `z.map()` and `z.date()` therefore work too. Environment variables and JSON files only provide strings, so use `z.coerce.date()` to get a `Date` from them.
 
 ### Override configuration locally
 
@@ -269,7 +269,7 @@ All options are optional:
 | `variant` | `string` | `undefined` | Select another override dimension, such as a customer or region. |
 | `fileExtensions` | `FileExtension[]` | `['ts', 'js']` | Extensions to search, in priority order; omit the leading dot. |
 | `throwOnUndefinedProp` | `boolean` | `true` | Throw when reading a property that does not exist. |
-| `freezeConfig` | `boolean` | `true` | Deeply freeze `config`, including arrays. `Set`s and `Map`s become read-only: `add`, `set`, `delete` and `clear` throw a `TypeError`. |
+| `freezeConfig` | `boolean` | `true` | Deeply freeze `config`, including arrays. `Set`s, `Map`s and `Date`s become read-only: their mutating methods (`add`, `set`, `delete`, `clear`, `setTime`...) throw a `TypeError`. |
 | `schema` | Standard Schema | `undefined` | Validate the merged config at runtime and infer its type. See [validation](#validate-configuration-at-runtime). |
 
 The default directory is relative to the **working directory of the process**, not the file that calls `loadConfig`. Use absolute paths when the launch directory can vary.

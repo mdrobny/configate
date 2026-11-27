@@ -91,10 +91,22 @@ describe('deepFreezeConfig', () => {
         assert.deepEqual([...config.s], ['a']);
     });
 
-    it('leaves Date untouched', () => {
-        const config = deepFreezeConfig({ d: new Date(0) });
+    it('makes Date read-only', () => {
+        const config = deepFreezeConfig({
+            d: new Date('2020-01-01T00:00:00.000Z'),
+            list: [new Date(0)],
+            m: new Map([['k', new Date(0)]]),
+        });
 
-        assert.equal(config.d.getTime(), 0);
-        assert.doesNotThrow(() => config.d.setTime(1));
+        assert(config.d instanceof Date);
+        assert(Object.isFrozen(config.d));
+        assert.throws(() => config.d.setTime(1), TypeError);
+        assert.throws(() => config.d.setFullYear(2000), TypeError);
+        assert.throws(() => config.d.setUTCHours(1), TypeError);
+        assert.throws(() => config.list[0].setTime(1), TypeError);
+        assert.throws(() => config.m.get('k')?.setTime(1), TypeError);
+
+        assert.equal(config.d.toISOString(), '2020-01-01T00:00:00.000Z');
+        assert.equal(config.list[0].getTime(), 0);
     });
 });

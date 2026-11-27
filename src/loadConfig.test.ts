@@ -164,6 +164,18 @@ describe('loadConfig', () => {
             assert.deepEqual([...config.events], ['scoreChange']);
             assert.equal(
                 config.createdAt.toISOString(),
+                '2025-06-01T00:00:00.000Z',
+            );
+        });
+
+        it('keeps default Date when there is no override', async () => {
+            const { config } = await loadConfig<CollectionsTestConfig>({
+                configDirs,
+                environment: 'production',
+            });
+
+            assert.equal(
+                config.createdAt.toISOString(),
                 '2020-01-01T00:00:00.000Z',
             );
         });
@@ -227,6 +239,18 @@ describe('loadConfig', () => {
             assert.equal(config.events.size, 3);
         });
 
+        it('makes Date read-only when config is frozen', async () => {
+            const { config } = await loadConfig<CollectionsTestConfig>({
+                configDirs,
+            });
+
+            assert.throws(() => config.createdAt.setTime(0), TypeError);
+            assert.equal(
+                config.createdAt.toISOString(),
+                '2020-01-01T00:00:00.000Z',
+            );
+        });
+
         it('keeps unsecureConfig Set and Map mutable and independent', async () => {
             const { config, unsecureConfig } =
                 await loadConfig<CollectionsTestConfig>({ configDirs });
@@ -237,6 +261,10 @@ describe('loadConfig', () => {
             assert.equal(unsecureConfig.events.has('x'), true);
             assert.equal(config.events.has('x'), false);
             assert.equal(config.labels.has('x'), false);
+
+            unsecureConfig.createdAt.setTime(0);
+            assert.equal(unsecureConfig.createdAt.getTime(), 0);
+            assert.notEqual(config.createdAt.getTime(), 0);
         });
 
         it('keeps Set and Map mutable when freezing is disabled', async () => {
@@ -247,6 +275,9 @@ describe('loadConfig', () => {
 
             config.events.add('x');
             assert.equal(config.events.has('x'), true);
+
+            config.createdAt.setTime(0);
+            assert.equal(config.createdAt.getTime(), 0);
         });
 
         it('validates Set and Map with a zod schema', async () => {
