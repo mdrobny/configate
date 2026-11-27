@@ -202,7 +202,7 @@ Config validation failed:
 ```
 
 Both `config` and `unsecureConfig` contain the schema's **output**, so defaults, coercions, and transforms (for example `z.coerce.number()` for environment variables) are applied. 
-Use schemas that output only plain data (objects, arrays, strings, numbers, booleans). Class instances such as `Date` are wrapped by the missing-property proxy and frozen, which breaks their methods.
+`Set`, `Map`, `Date` and other non-plain values (class instances) are supported as leaf values: they are not merged or wrapped by the missing-property proxy, so their methods keep working. Schemas such as `z.set()`, `z.map()` and `z.date()` therefore work too. Environment variables and JSON files only provide strings, so use `z.coerce.date()` to get a `Date` from them.
 
 ### Override configuration locally
 
@@ -247,7 +247,8 @@ Each directory must contain a default file. Other files are optional, although C
 ### Merge rules
 
 - Objects merge recursively, preserving properties that are not overridden.
-- Arrays are replaced entirely, not combined.
+- `Map`s merge by key, like objects: later files add and override entries, and values that are plain objects merge recursively.
+- Arrays, `Set`s and other non-plain objects (`Date`, class instances) are replaced entirely, not combined.
 - Properties whose override value is `undefined` are ignored.
 - Directories are fully loaded and then merged in `configDirs` order. Later directories win.
 
@@ -268,7 +269,7 @@ All options are optional:
 | `variant` | `string` | `undefined` | Select another override dimension, such as a customer or region. |
 | `fileExtensions` | `FileExtension[]` | `['ts', 'js']` | Extensions to search, in priority order; omit the leading dot. |
 | `throwOnUndefinedProp` | `boolean` | `true` | Throw when reading a property that does not exist. |
-| `freezeConfig` | `boolean` | `true` | Deeply freeze `config`, including arrays. |
+| `freezeConfig` | `boolean` | `true` | Deeply freeze `config`, including arrays. `Set`s, `Map`s and `Date`s become read-only: their mutating methods (`add`, `set`, `delete`, `clear`, `setTime`...) throw a `TypeError`. |
 | `schema` | Standard Schema | `undefined` | Validate the merged config at runtime and infer its type. See [validation](#validate-configuration-at-runtime). |
 
 The default directory is relative to the **working directory of the process**, not the file that calls `loadConfig`. Use absolute paths when the launch directory can vary.

@@ -64,4 +64,49 @@ describe('deepFreezeConfig', () => {
             config.empty.push(1);
         }, TypeError);
     });
+
+    it('makes Set and Map read-only', () => {
+        const config = deepFreezeConfig({
+            s: new Set(['a']),
+            m: new Map([['k', { label: 'original' }]]),
+            list: [new Set([1])],
+        });
+
+        assert(config.s instanceof Set);
+        assert(config.m instanceof Map);
+        assert(Object.isFrozen(config.s));
+        assert(Object.isFrozen(config.m));
+        assert(Object.isFrozen(config.m.get('k')));
+
+        assert.throws(() => config.s.add('b'), TypeError);
+        assert.throws(() => config.s.delete('a'), TypeError);
+        assert.throws(() => config.s.clear(), TypeError);
+        assert.throws(() => config.m.set('x', { label: 'x' }), TypeError);
+        assert.throws(() => config.m.delete('k'), TypeError);
+        assert.throws(() => config.m.clear(), TypeError);
+        assert.throws(() => config.list[0].add(2), TypeError);
+
+        assert.equal(config.s.has('a'), true);
+        assert.equal(config.m.get('k')?.label, 'original');
+        assert.deepEqual([...config.s], ['a']);
+    });
+
+    it('makes Date read-only', () => {
+        const config = deepFreezeConfig({
+            d: new Date('2020-01-01T00:00:00.000Z'),
+            list: [new Date(0)],
+            m: new Map([['k', new Date(0)]]),
+        });
+
+        assert(config.d instanceof Date);
+        assert(Object.isFrozen(config.d));
+        assert.throws(() => config.d.setTime(1), TypeError);
+        assert.throws(() => config.d.setFullYear(2000), TypeError);
+        assert.throws(() => config.d.setUTCHours(1), TypeError);
+        assert.throws(() => config.list[0].setTime(1), TypeError);
+        assert.throws(() => config.m.get('k')?.setTime(1), TypeError);
+
+        assert.equal(config.d.toISOString(), '2020-01-01T00:00:00.000Z');
+        assert.equal(config.list[0].getTime(), 0);
+    });
 });

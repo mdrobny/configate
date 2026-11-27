@@ -69,6 +69,88 @@ describe('deepMerge', () => {
         );
     });
 
+    it('overrides Set and Date instead of merging them', () => {
+        type TestConfig = {
+            s: Set<string>;
+            d: Date;
+        };
+
+        const target: TestConfig = {
+            s: new Set(['a', 'b', 'c']),
+            d: new Date('2020-01-01T00:00:00.000Z'),
+        };
+        const source: TestConfig = {
+            s: new Set(['a']),
+            d: new Date('2021-01-01T00:00:00.000Z'),
+        };
+
+        const result = deepMerge<TestConfig>(target, source);
+
+        assert.deepEqual([...result.s], ['a']);
+        assert.equal(result.d.toISOString(), '2021-01-01T00:00:00.000Z');
+        assert.equal(result.s, source.s);
+    });
+
+    it('merges Maps by key, recursing into plain object values', () => {
+        type TestConfig = {
+            m: Map<string, { a?: number; b?: number } | number>;
+        };
+
+        const original = new Map<string, { a?: number; b?: number } | number>([
+            ['x', { a: 1, b: 2 }],
+            ['y', 1],
+            ['z', 5],
+        ]);
+        const target: TestConfig = { m: original };
+        const source: TestConfig = {
+            m: new Map<string, { a?: number; b?: number } | number>([
+                ['x', { b: 3 }],
+                ['y', 2],
+                ['n', 9],
+            ]),
+        };
+
+        const result = deepMerge<TestConfig>(target, source);
+
+        assert.deepEqual(
+            [...result.m],
+            [
+                ['x', { a: 1, b: 3 }],
+                ['y', 2],
+                ['z', 5],
+                ['n', 9],
+            ],
+        );
+        assert.equal(original.size, 3, 'the original Map is not mutated');
+    });
+
+    it('merges nested Maps', () => {
+        type TestConfig = { m: Map<string, Map<string, number>> };
+
+        const result = deepMerge<TestConfig>(
+            {
+                m: new Map([
+                    [
+                        'x',
+                        new Map([
+                            ['a', 1],
+                            ['b', 2],
+                        ]),
+                    ],
+                ]),
+            },
+            { m: new Map([['x', new Map([['b', 3]])]]) },
+        );
+
+        assert.deepEqual(
+            [...(result.m.get('x') ?? [])],
+            [
+                ['a', 1],
+                ['b', 3],
+            ],
+        );
+    });
+
     it('ignores properties with undefined values', () => {
         type TestConfig = {
             a?: number;

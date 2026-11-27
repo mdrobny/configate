@@ -1,19 +1,22 @@
-import { type DefaultConfig, isObject } from './common.ts';
+import { type DefaultConfig, isPlainObject } from './common.ts';
 
 /**
  * Use Proxy to add custom behavior when accessing properties of the config object
  * Throw an error if the property is not defined in the config
+ *
+ * Only plain objects and arrays are proxied. Set, Map, Date and other non-plain
+ * objects are left as they are, because their methods break on a Proxy receiver.
  */
 export function makeSecureDeepProxy<T extends DefaultConfig>(config: T): T {
     for (const prop in config) {
-        if (isObject(config[prop])) {
+        if (isPlainObject(config[prop])) {
             // If it's an object, recursively wrap it
             config[prop] = makeSecureDeepProxy<T[typeof prop]>(config[prop]);
         } else if (Array.isArray(config[prop])) {
             // If it's an array, wrap each element and the array itself
             config[prop] = makeSecureProxy<T[typeof prop]>(
                 config[prop].map((item: unknown) =>
-                    isObject(item) || Array.isArray(item)
+                    isPlainObject(item) || Array.isArray(item)
                         ? makeSecureDeepProxy(item)
                         : item,
                 ),

@@ -136,7 +136,7 @@ custom-environment-variables
 ```
 
 Environment and variant entries are conditional on the corresponding option. 
-Objects merge recursively, arrays replace whole arrays, and `undefined` values do not overwrite existing values. 
+Plain objects and `Map`s merge recursively, arrays and `Set`s replace the whole value, and `undefined` values do not overwrite existing values. 
 `null`, `false`, `0`, and empty strings do overwrite them.
 
 Implementation notes:
