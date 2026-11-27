@@ -31,6 +31,14 @@ export type DeepPartial<T> = T extends object
       }
     : T | undefined; // Allow undefined for leaf values
 
-export function isObject(item: unknown): item is object {
-    return item !== null && typeof item === 'object' && !Array.isArray(item);
+/**
+ * True only for plain objects (`{}` literals and `Object.create(null)`).
+ * Arrays, Set, Map, Date, RegExp and class instances are not plain objects.
+ */
+export function isPlainObject(item: unknown): item is Record<string, unknown> {
+    if (item === null || typeof item !== 'object') {
+        return false;
+    }
+    const proto = Object.getPrototypeOf(item);
+    return proto === Object.prototype || proto === null;
 }

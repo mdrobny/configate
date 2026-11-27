@@ -150,6 +150,121 @@ describe('loadConfig', () => {
         assert.deepEqual(config.empty, [1]);
     });
 
+    describe('loadConfig with Set, Map and Date', () => {
+        const configDirs = [
+            `${import.meta.dirname}/testConfigDirs/collections`,
+        ];
+
+        it('replaces Set and merges Map from default config with the environment override', async () => {
+            const { config } = await loadConfig<CollectionsTestConfig>({
+                configDirs,
+                environment: 'test',
+            });
+
+            assert.deepEqual([...config.events], ['scoreChange']);
+            assert.equal(
+                config.createdAt.toISOString(),
+                '2020-01-01T00:00:00.000Z',
+            );
+        });
+
+        it('merges Maps by key by default', async () => {
+            const { config } = await loadConfig<CollectionsTestConfig>({
+                configDirs,
+                environment: 'test',
+            });
+
+            assert.deepEqual([...config.labels.keys()], ['a', 'b', 'c']);
+            assert.equal(config.labels.get('a')?.text, 'default-a');
+            assert.equal(config.labels.get('c')?.text, 'test-c');
+        });
+
+        it('keeps default Set and Map when there is no override', async () => {
+            const { config } = await loadConfig<CollectionsTestConfig>({
+                configDirs,
+                environment: 'production',
+            });
+
+            assert.deepEqual(
+                [...config.events],
+                ['scoreChange', 'card', 'corner'],
+            );
+            assert.equal(config.labels.get('a')?.text, 'default-a');
+        });
+
+        it('allows reading Set and Map through the secure proxy', async () => {
+            const { config } = await loadConfig<CollectionsTestConfig>({
+                configDirs,
+                throwOnUndefinedProp: true,
+            });
+
+            assert.equal(config.events.has('card'), true);
+            assert.equal(config.events.size, 3);
+            assert.equal(config.labels.get('b')?.text, 'default-b');
+            assert.equal(typeof config.createdAt.getTime(), 'number');
+        });
+
+        it('makes Set and Map read-only when config is frozen', async () => {
+            const { config } = await loadConfig<CollectionsTestConfig>({
+                configDirs,
+            });
+
+            assert.throws(() => config.events.add('x'), TypeError);
+            assert.throws(() => config.events.delete('card'), TypeError);
+            assert.throws(() => config.events.clear(), TypeError);
+            assert.throws(
+                () => config.labels.set('x', { text: 'x' }),
+                TypeError,
+            );
+            assert.throws(() => config.labels.delete('a'), TypeError);
+            assert.throws(() => config.labels.clear(), TypeError);
+            assert.throws(() => {
+                const label = config.labels.get('a');
+                if (label) {
+                    label.text = 'modified';
+                }
+            }, TypeError);
+            assert.equal(config.events.size, 3);
+        });
+
+        it('keeps unsecureConfig Set and Map mutable and independent', async () => {
+            const { config, unsecureConfig } =
+                await loadConfig<CollectionsTestConfig>({ configDirs });
+
+            unsecureConfig.events.add('x');
+            unsecureConfig.labels.set('x', { text: 'x' });
+
+            assert.equal(unsecureConfig.events.has('x'), true);
+            assert.equal(config.events.has('x'), false);
+            assert.equal(config.labels.has('x'), false);
+        });
+
+        it('keeps Set and Map mutable when freezing is disabled', async () => {
+            const { config } = await loadConfig<CollectionsTestConfig>({
+                configDirs,
+                freezeConfig: false,
+            });
+
+            config.events.add('x');
+            assert.equal(config.events.has('x'), true);
+        });
+
+        it('validates Set and Map with a zod schema', async () => {
+            const { config } = await loadConfig({
+                configDirs,
+                environment: 'test',
+                schema: z.object({
+                    events: z.set(z.string()),
+                    labels: z.map(z.string(), z.object({ text: z.string() })),
+                    createdAt: z.date(),
+                }),
+            });
+
+            assert.equal(config.events.has('scoreChange'), true);
+            assert.equal(config.labels.get('c')?.text, 'test-c');
+        });
+    });
+
     describe('loadConfig with schema', () => {
         const configDirs = [
             `${import.meta.dirname}/testConfigDirs/environment`,
@@ -234,4 +349,10 @@ export type ArrayTestConfig = {
     values: number[];
     nested: { label: string }[][];
     empty: number[];
+};
+
+export type CollectionsTestConfig = {
+    events: Set<string>;
+    labels: Map<string, { text: string }>;
+    createdAt: Date;
 };

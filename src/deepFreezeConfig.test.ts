@@ -64,4 +64,37 @@ describe('deepFreezeConfig', () => {
             config.empty.push(1);
         }, TypeError);
     });
+
+    it('makes Set and Map read-only', () => {
+        const config = deepFreezeConfig({
+            s: new Set(['a']),
+            m: new Map([['k', { label: 'original' }]]),
+            list: [new Set([1])],
+        });
+
+        assert(config.s instanceof Set);
+        assert(config.m instanceof Map);
+        assert(Object.isFrozen(config.s));
+        assert(Object.isFrozen(config.m));
+        assert(Object.isFrozen(config.m.get('k')));
+
+        assert.throws(() => config.s.add('b'), TypeError);
+        assert.throws(() => config.s.delete('a'), TypeError);
+        assert.throws(() => config.s.clear(), TypeError);
+        assert.throws(() => config.m.set('x', { label: 'x' }), TypeError);
+        assert.throws(() => config.m.delete('k'), TypeError);
+        assert.throws(() => config.m.clear(), TypeError);
+        assert.throws(() => config.list[0].add(2), TypeError);
+
+        assert.equal(config.s.has('a'), true);
+        assert.equal(config.m.get('k')?.label, 'original');
+        assert.deepEqual([...config.s], ['a']);
+    });
+
+    it('leaves Date untouched', () => {
+        const config = deepFreezeConfig({ d: new Date(0) });
+
+        assert.equal(config.d.getTime(), 0);
+        assert.doesNotThrow(() => config.d.setTime(1));
+    });
 });

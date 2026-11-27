@@ -140,6 +140,31 @@ describe('makeSecureDeepProxy', () => {
         }, /Property b is not defined in the config/);
     });
 
+    it('leaves Set, Map and Date usable', () => {
+        const config = {
+            s: new Set(['a', 'b']),
+            m: new Map([['k', 1]]),
+            d: new Date('2020-01-01T00:00:00.000Z'),
+            list: [new Set([1])],
+            nested: { s: new Set(['x']) },
+        };
+
+        const proxy = makeSecureDeepProxy(config);
+
+        assert.equal(proxy.s.has('a'), true);
+        assert.equal(proxy.s.size, 2);
+        assert.deepEqual([...proxy.s], ['a', 'b']);
+        assert.equal(proxy.m.get('k'), 1);
+        assert.equal(proxy.d.getTime(), 1577836800000);
+        assert.equal(proxy.list[0].has(1), true);
+        assert.equal(proxy.nested.s.has('x'), true);
+
+        assert.throws(() => {
+            // @ts-expect-error
+            proxy.nested.missing;
+        }, /Property missing is not defined in the config/);
+    });
+
     it('allows JSON.stringify on secure config', () => {
         const config = {
             a: 1,
